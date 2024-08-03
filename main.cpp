@@ -166,7 +166,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
 
   using namespace std::chrono;
 
-  Timer t; //回転数の計算とPIDで使うためのタイマー
+  Timer t; //PIDで使うためのタイマー
   t.start();
   SocketAddress source;
   char buffer[64];
@@ -213,7 +213,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
       }
       //---------------------------受信したパケット（文字列）をintに変換---------------------------//
 
-      //---------------------------方向指令と速度指令を分離---------------------------//
+      //---------------------------方向指令を分離---------------------------//
       /*printf("%d, %d, %d, %d, %d\n", data[1], data[2], data[3], data[4],
              data[5]);*/
 
@@ -251,7 +251,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
       ENC5.reset();
       ENC6.reset();
       */
-      //---------------------------エンコーダーの値をもとに回転数（RPM）を計算---------------------------//
+      //---------------------------エンコーダーの値をもとに角度（度数法）を計算---------------------------//
 
       t.stop(); //タイマーを停止する、回転数の計算とPIDに使う
       dt = duration_cast<milliseconds>(t.elapsed_time())
@@ -300,12 +300,12 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
 
       t.reset(); //タイマーをリセット
       t.start(); //タイマーを開始
-
-      printf("%lf, %lf, %lf, %lf\n", Output[1], Error[1], Integral[1],
-             Differential[1]);
+                 /*
+                       printf("%lf, %lf, %lf, %lf\n", Output[1], Error[1], Integral[1],
+                              Differential[1]);*/
 
       // モーターがうまく回らないときは要調整、短すぎるとPIDがうまく動かず、長すぎるとレスポンスが悪くなる
-      sleep_for(10);
+      //sleep_for(5);
 
       //---------------------------モタドラに出力---------------------------//
 
