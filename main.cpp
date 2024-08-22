@@ -174,7 +174,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
   int data[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
   //---------------------------PID parameters---------------------------//
-  Kp = 0.01;         // Pゲイン
+  Kp = 0.05;         // Pゲイン
   Ki = 0.01;         // Iゲイン
   Kd = 0.0;          // Dゲイン
   deg_limit = 360.0; //上限
@@ -262,6 +262,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
       dt_d =
           (double)dt /
           1000000000.0; // dtをdouble型にキャストする、そのままだと大きすぎるので微小時間にする
+
       for (int i = 1; i <= 6; i++) {
         target[i] = (double)data[i];
         Error[i] = target[i] - (deg[i]); // P制御,目標値と現在値の差分をとる
@@ -276,6 +277,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
             ((Kp * Error[i]) + (Ki * Integral[i]) +
              (Kd * Differential[i])); // PID制御,ゲインをかけて足し合わせる
 
+        //振動を防ぐためにある程度の誤差は許容する
         if (fabs(Error[i]) <= 3.0) {
           Output[i] = 0;
         }
@@ -305,7 +307,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
                               Differential[1]);*/
 
       // モーターがうまく回らないときは要調整、短すぎるとPIDがうまく動かず、長すぎるとレスポンスが悪くなる
-      //sleep_for(5);
+      sleep_for(10);
 
       //---------------------------モタドラに出力---------------------------//
 
