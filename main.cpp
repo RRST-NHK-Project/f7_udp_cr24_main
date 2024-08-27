@@ -317,6 +317,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
         MD2P = 0.2;
       } else {
         MD2P = 0.0;
+        
       }
 
       MD1D = mdd[1];
