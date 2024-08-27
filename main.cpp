@@ -166,7 +166,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
 
   using namespace std::chrono;
 
-  Timer t; //PIDで使うためのタイマー
+  Timer t; // PIDで使うためのタイマー
   t.start();
   SocketAddress source;
   char buffer[64];
@@ -280,6 +280,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
         //振動を防ぐためにある程度の誤差は許容する
         if (fabs(Error[i]) <= 3.0) {
           Output[i] = 0;
+          MD2P = 0.2;
         }
 
         mdp[i] = Output[i] / deg_limit;
@@ -311,8 +312,15 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
 
       //---------------------------モタドラに出力---------------------------//
 
+      if (data[2] == 1) {
+        MD2D = 1;
+        MD2P = 0.2;
+      } else {
+        MD2P = 0.0;
+      }
+
       MD1D = mdd[1];
-      MD2D = mdd[2];
+      // MD2D = mdd[2];
       // MD3D = mdd[3];
       // MD4D = mdd[4];
       MD5D = mdd[3];
@@ -321,7 +329,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
       MD8D = mdd[8];
 
       MD1P = mdp[1];
-      MD2P = mdp[2];
+      // MD2P = mdp[2];
       // MD3P = mdp[3];
       // MD4P = mdp[4];
       MD5P = mdp[3];
