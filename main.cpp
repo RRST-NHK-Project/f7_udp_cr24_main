@@ -160,17 +160,6 @@ int main() {
 
   receiveThread.join();
 
-  while (1) {
-    udp.sendto(destination, pos_ok_msg, sizeof(pos_ok_msg));
-
-    if (pos_ok == true) {
-
-      udp.sendto(destination, pos_ok_msg, sizeof(pos_ok_msg));
-      printf("sended");
-
-      pos_ok = false;
-    }
-  }
   udp.close();
   net.disconnect();
   return 0;
