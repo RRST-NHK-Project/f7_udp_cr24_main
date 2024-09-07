@@ -159,7 +159,6 @@ int main() {
   receiveThread.start(callback(receive, &udp));
 
   receiveThread.join();
-
   udp.close();
   net.disconnect();
   return 0;
@@ -284,12 +283,12 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
           Output[i] = 0;
           MD2P = 0.2;
         }
-        /*
-                if (fabs(Output[1] <= 0.3)) {
-                  MD2P = 0.1;
-                  pos_ok = true;
-                }
-        */
+/*
+        if (fabs(Output[1] <= 0.3)) {
+          MD2P = 0.1;
+          pos_ok = true;
+        }
+*/
         mdp[i] = Output[i] / deg_limit;
 
         // 安全のためPWMの出力を制限　絶対に消すな
