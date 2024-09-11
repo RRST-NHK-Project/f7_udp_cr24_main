@@ -187,6 +187,8 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
 
   int data[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
+  bool init = 0;
+
   //---------------------------PID parameters---------------------------//
   //ゲインを一括で設定する。個別で設定する場合はPIDのfor内に記述する
   Kp = 0.1;          // Pゲイン
@@ -314,13 +316,33 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
         }
 
         int r_tg = 2048;
-        double r_duty = 0.1;
-        // r軸位置合わせ（PID無効）
+        double r_duty = 0.5;
 
+        // r軸の位置初期化（初回のみ）
+        if (init == false) {
+          if (data[3] > 0) {
+            while (SW1 == 0) {
+              MD5D = 1;
+              MD5P = r_duty;
+            }
+            MD5P = 0;
+          }
+          if (data[3] < 0) {
+            while (SW2 == 0) {
+              MD5D = 0;
+              MD5P = r_duty;
+            }
+            MD5P = 0;
+          }
+          init = true;
+        }
+        // end
+
+        // r軸位置合わせ（PID無効）
         if (data[3] == 1) {
           while (SW1 == 0) {
             MD5D = 1;
-            MD5P = 0.3;
+            MD5P = r_duty;
           }
           ENC3.reset();
           MD5P = 0;
@@ -329,7 +351,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
         if (data[3] == -1) {
           while (SW2 == 0) {
             MD5D = 0;
-            MD5P = 0.3;
+            MD5P = r_duty;
           }
           ENC3.reset();
           MD5P = 0;
@@ -338,7 +360,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
         if (data[3] == 2) {
           if (abs(Pulse[3]) <= r_tg) {
             MD5D = 0;
-            MD5P = 0.3;
+            MD5P = r_duty;
           } else {
             MD5P = 0;
           }
@@ -347,7 +369,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
         if (data[3] == -2) {
           if (abs(Pulse[3]) <= r_tg) {
             MD5D = 1;
-            MD5P = 0.3;
+            MD5P = r_duty;
           } else {
             MD5P = 0;
           }
