@@ -3,7 +3,19 @@
 ROS2から角度司令を受信する
 エンコーダーの値をもとに角度に対してPIDをかける
 メイン基板V2はMD3,MD4が使えない
-2024/09/04
+PIDはタイマー割り込みに変更予定
+2024/09/10
+*/
+
+/*
+MD1: シューティングコンベアθ軸
+MD2: シューティングコンベア送り
+MD3: 使用不可
+MD4: 使用不可
+MD5: シューティングコンベアr軸
+MD6: 空き
+MD7: ソーティングコンベア詰まり防止
+MD8: ソーティングコンベア送り
 */
 
 #include "EthernetInterface.h"
@@ -176,6 +188,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
   int data[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
   //---------------------------PID parameters---------------------------//
+  //ゲインを一括で設定する。個別で設定する場合はPIDのfor内に記述する
   Kp = 0.1;          // Pゲイン
   Ki = 0.01;         // Iゲイン
   Kd = 0.0;          // Dゲイン
@@ -274,21 +287,85 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
 
         last_Error[i] = Error[i];
 
+        //個別にゲイン調整
+        if (i == 1) {
+          // PIDなら0.1,0.01,0,0
+          Kp = 0.2; // Pゲイン
+          Ki = 0.0; // Iゲイン
+          Kd = 0.0; // Dゲイン
+        }
+
         Output[i] +=
             ((Kp * Error[i]) + (Ki * Integral[i]) +
              (Kd * Differential[i])); // PID制御,ゲインをかけて足し合わせる
 
+        /*
         //振動を防ぐためにある程度の誤差は許容する
         if (fabs(Error[i]) <= 3.0) {
           Output[i] = 0;
           MD2P = 0.2;
         }
-/*
-        if (fabs(Output[1] <= 0.3)) {
-          MD2P = 0.1;
-          pos_ok = true;
+        */
+
+        //振動を防ぐためにある程度の誤差は許容する
+        if (fabs(Error[1]) <= 3.0) {
+          Output[1] = 0;
+          MD2P = 0.2;
         }
-*/
+
+        int r_tg = 2048;
+        double r_duty = 0.1;
+        // r軸位置合わせ（PID無効）
+
+        if (data[3] == 1) {
+          while (SW1 == 0) {
+            MD5D = 1;
+            MD5P = 0.3;
+          }
+          ENC3.reset();
+          MD5P = 0;
+        }
+
+        if (data[3] == -1) {
+          while (SW2 == 0) {
+            MD5D = 0;
+            MD5P = 0.3;
+          }
+          ENC3.reset();
+          MD5P = 0;
+        }
+
+        if (data[3] == 2) {
+          if (abs(Pulse[3]) <= r_tg) {
+            MD5D = 0;
+            MD5P = 0.3;
+          } else {
+            MD5P = 0;
+          }
+        }
+
+        if (data[3] == -2) {
+          if (abs(Pulse[3]) <= r_tg) {
+            MD5D = 1;
+            MD5P = 0.3;
+          } else {
+            MD5P = 0;
+          }
+        }
+
+        // end
+
+        /*
+        // θ軸位置合わせ（PID無効）
+        if (abs(Pulse[1]) <= abs(data[1] * 10)) {
+            // printf("ok");
+            MD1P = 0.3;
+        } else {
+            MD1P = 0.0;
+        }
+        // end
+        */
+
         mdp[i] = Output[i] / deg_limit;
 
         // 安全のためPWMの出力を制限　絶対に消すな
@@ -341,7 +418,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
       // MD2D = mdd[2];
       // MD3D = mdd[3];
       // MD4D = mdd[4];
-      MD5D = mdd[3];
+      // MD5D = mdd[3];
       MD6D = mdd[4];
       MD7D = mdd[7];
       // MD8D = mdd[8];
@@ -350,7 +427,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
       // MD2P = mdp[2];
       // MD3P = mdp[3];
       // MD4P = mdp[4];
-      MD5P = mdp[3];
+      // MD5P = mdp[3];
       MD6P = mdp[4];
       MD7P = 0.2;
       // MD8P = mdp[8];
