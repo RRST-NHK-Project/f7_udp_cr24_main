@@ -292,9 +292,9 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
         //個別にゲイン調整
         if (i == 1) {
           // PIDなら0.1,0.01,0,0
-          Kp = 0.2; // Pゲイン
+          Kp = 0.2;  // Pゲイン
           Ki = 0.0; // Iゲイン
-          Kd = 0.0; // Dゲイン
+          Kd = 0.0;  // Dゲイン
         }
 
         Output[i] +=
@@ -312,7 +312,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
         //振動を防ぐためにある程度の誤差は許容する
         if (fabs(Error[1]) <= 3.0) {
           Output[1] = 0;
-          MD2P = 0.2;
+          MD2P = 0.5;
         }
 
         int r_tg = 2048;
@@ -413,7 +413,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
                               Differential[1]);*/
 
       // モーターがうまく回らないときは要調整、短すぎるとPIDがうまく動かず、長すぎるとレスポンスが悪くなる
-      sleep_for(10);
+      sleep_for(5);
 
       //---------------------------モタドラに出力---------------------------//
 
