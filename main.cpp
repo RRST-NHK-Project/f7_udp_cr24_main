@@ -196,7 +196,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
   Kd = 0.0;          // Dゲイン
   deg_limit = 360.0; //上限
   pwm_limit =
-      0.6; // MDに出力されるデューテー比の上限を設定する。安全装置の役割を持つ
+      0.8; // MDに出力されるデューテー比の上限を設定する。安全装置の役割を持つ
   //動作に影響するようなら#defineに変更
   //---------------------------PID parameters---------------------------//
 
@@ -277,7 +277,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
 
       dt_d =
           (double)dt /
-          1000000000.0; // dtをdouble型にキャストする、そのままだと大きすぎるので微小時間にする（タイマー割り込みに変更予定）
+          1000000000.0; // dtをdouble型にキャストする、そのままだと大きすぎるので微小時間にする（タイマー割り込みに変更予定）def:1000000000.0
 
       for (int i = 1; i <= 6; i++) {
         target[i] = (double)data[i];
@@ -292,8 +292,8 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
         //個別にゲイン調整
         if (i == 1) {
           // PIDなら0.1,0.01,0,0
-          Kp = 0.2;  // Pゲイン
-          Ki = 0.0; // Iゲイン
+          Kp = 0.1;  // Pゲイン
+          Ki = 0.01; // Iゲイン
           Kd = 0.0;  // Dゲイン
         }
 
@@ -376,18 +376,20 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
         }
 
         // end
-
-        /*
+/*
         // θ軸位置合わせ（PID無効）
-        if (abs(Pulse[1]) <= abs(data[1] * 10)) {
-            // printf("ok");
-            MD1P = 0.3;
+        if ((Pulse[1] >= data[1] * 10)&&(abs(Pulse[1] - data[1] * 10) >= 25)) {
+          MD1D = 0;
+          MD1P = 0.3;
+        } else if ((Pulse[1] <= data[1] * 10)&&(abs(Pulse[1] - data[1] * 10) >= 25)) {
+          MD1D = 1;
+          MD1P = 0.3;
         } else {
-            MD1P = 0.0;
+          MD1P = 0;
         }
-        // end
-        */
 
+        // end
+*/
         mdp[i] = Output[i] / deg_limit;
 
         // 安全のためPWMの出力を制限　絶対に消すな
@@ -413,20 +415,20 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
                               Differential[1]);*/
 
       // モーターがうまく回らないときは要調整、短すぎるとPIDがうまく動かず、長すぎるとレスポンスが悪くなる
-      sleep_for(5);
+      sleep_for(10);
 
       //---------------------------モタドラに出力---------------------------//
 
       if (data[2] == 1) {
         MD2D = 1;
-        MD2P = 0.1;
+        MD2P = 0.3;
         MD8D = 0;
         MD8P = 0.3;
       }
 
       if (data[2] == 2) {
         MD2D = 0;
-        MD2P = 0.1;
+        MD2P = 0.3;
         MD8D = 0;
         MD8P = 0.3;
       }
@@ -436,12 +438,14 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
         MD8P = 0.0;
       }
 
+      printf("%f\n",mdp[1]);
+
       MD1D = mdd[1];
       // MD2D = mdd[2];
       // MD3D = mdd[3];
       // MD4D = mdd[4];
       // MD5D = mdd[3];
-      MD6D = mdd[4];
+      MD6D = mdd[1];
       MD7D = mdd[7];
       // MD8D = mdd[8];
 
@@ -450,7 +454,7 @@ void receive(UDPSocket *receiver) { // UDP受信スレッド
       // MD3P = mdp[3];
       // MD4P = mdp[4];
       // MD5P = mdp[3];
-      MD6P = mdp[4];
+      MD6P = mdp[1];
       MD7P = 0.2;
       // MD8P = mdp[8];
 
